@@ -42,11 +42,22 @@
             </div>
 
         </div>
-        <div class="mb-3">
-            <label for="location" class="form-label">Location</label>
-            <input type="text" name="listing[location]" value="<%= listing.location%>"
-            class="form-control" required>
-            <div class="invalid-feedback">Location should be valid.</div>
+        <div class="row">
+            <div class="mb-3 col-md-6">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" name="listing[location]" value="<%= listing.location%>" class="form-control" required>
+                <div class="invalid-feedback">Location should be valid.</div>
+            </div>
+            <div class="mb-3 col-md-6">
+                <label for="category" class="form-label">Category</label>
+                <select name="listing[category]" class="form-select" required>
+                    <% const categories = ["Trending", "Rooms", "Iconic Cities", "Mountains", "Castles", "Amazing Pools", "Camping", "Farms", "Arctic", "Domes", "Boats"]; %>
+                    <% for (let cat of categories) { %>
+                        <option value="<%= cat %>" <%= listing.category === cat ? "selected" : "" %>><%= cat %></option>
+                    <% } %>
+                </select>
+                <div class="invalid-feedback">Please select a category.</div>
+            </div>
         </div>
 
         <button class="btn btn-dark edit-btn mt-3"> Edit</button>
