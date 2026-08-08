@@ -264,3 +264,48 @@ body {
 .f-info-socials i:hover {
   color: var(--brand-primary);
 }
+
+/* Wishlist Button Overlay */
+.wishlist-form {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+}
+
+.wishlist-btn {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border: none;
+  border-radius: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fe424d;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.15);
+  background: #ffffff;
+}
+
+[data-bs-theme="dark"] .wishlist-btn {
+  background: rgba(30, 41, 59, 0.85);
+  color: #fe424d;
+}
+
+/* Leaflet Map Container */
+#map {
+  height: 350px;
+  width: 100%;
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+  border: 1px solid var(--border-light);
+}

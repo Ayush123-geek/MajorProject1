@@ -20,6 +20,17 @@ const listingSchema = new Schema({
         enum: ["Trending", "Rooms", "Iconic Cities", "Mountains", "Castles", "Amazing Pools", "Camping", "Farms", "Arctic", "Domes", "Boats"],
         default: "Trending"
     },
+    geometry: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point",
+        },
+        coordinates: {
+            type: [Number],
+            default: [0, 0],
+        },
+    },
     reviews: [
         {
             type: Schema.Types.ObjectId,

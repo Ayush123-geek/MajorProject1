@@ -1,4 +1,5 @@
 const User=require("../models/user.js");
+const Listing=require("../models/listing.js");
 
 module.exports.renderSignupForm=(req, res)=>{
     res.render("users/signup.ejs");
@@ -41,4 +42,27 @@ module.exports.logout=(req, res, next)=>{
         req.flash("success","you are logged out!");
         res.redirect("/listings");
     })
+}
+
+// Wishlist: Toggle (add/remove) a listing from current user's wishlist
+module.exports.toggleWishlist = async (req, res) => {
+    let { id } = req.params;
+    const user = await User.findById(req.user._id);
+    const idx = user.wishlist.indexOf(id);
+    if (idx === -1) {
+        user.wishlist.push(id);
+        req.flash("success", "Added to your Wishlist!");
+    } else {
+        user.wishlist.splice(idx, 1);
+        req.flash("success", "Removed from your Wishlist.");
+    }
+    await user.save();
+    const redirectUrl = req.get("Referrer") || "/listings";
+    res.redirect(redirectUrl);
+}
+
+// Wishlist: Render user's saved listings
+module.exports.renderWishlist = async (req, res) => {
+    const user = await User.findById(req.user._id).populate("wishlist");
+    res.render("users/wishlist.ejs", { wishlistListings: user.wishlist });
 }

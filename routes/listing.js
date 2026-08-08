@@ -26,8 +26,9 @@ router
     .delete(isLoggedIn, isOwner, wrapAsync(listingController.deleteListing))
 
 
-//Edit Route
-router.get("/:id/edit",isLoggedIn, isOwner,wrapAsync(listingController.renderEditForm));
+const userController= require("../controller/user.js");
 
+//Wishlist Route
+router.post("/:id/wishlist", isLoggedIn, wrapAsync(userController.toggleWishlist));
 
 module.exports=router;

@@ -1,111 +1,154 @@
 <% layout("/layouts/boilerplate") %>
 
     <style>
-        #filters {
+        .filter-section {
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
-        }
-        .filter {
-            text-align: center;
-            margin-right: 1.65rem;
+            justify-content: space-between;
+            gap: 1.5rem;
             margin-top: 1rem;
-            opacity: 0.7;
-            text-decoration: none;
-            color: inherit;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
             padding-bottom: 0.25rem;
-            transition: all 0.2s ease;
+            flex: 1;
         }
-        .filter:hover, .filter.active-filter {
-            opacity: 1;
-            color: #fe424d;
-            border-bottom: 2px solid #fe424d;
+
+        .filters-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
-        .filter p {
+
+        .filter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-muted);
             font-size: 0.8rem;
-            margin-bottom: 0;
+            font-weight: 500;
+            white-space: nowrap;
+            padding: 0.4rem 0.6rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
-        .tax-info {
-            display: none;
+
+        .filter i {
+            font-size: 1.25rem;
+            margin-bottom: 0.35rem;
+            transition: transform 0.2s ease;
         }
+
+        .filter:hover, .filter.active-filter {
+            color: var(--brand-primary);
+            border-bottom-color: var(--brand-primary);
+            opacity: 1;
+        }
+
+        .filter:hover i {
+            transform: translateY(-2px);
+        }
+
         .tax-toggle {
             border: 1px solid var(--border-light);
-            border-radius: 1rem;
-            height: 3.25rem;
-            padding: 0.75rem 1rem;
-            margin-left: auto;
-            margin-top: 0.75rem;
+            border-radius: 2rem;
+            padding: 0.5rem 1.1rem;
             display: flex;
             align-items: center;
             background-color: var(--bg-card);
             color: var(--text-main);
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .tax-toggle:hover {
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .tax-toggle .form-check-input {
+            cursor: pointer;
+        }
+
+        .tax-toggle .form-check-input:checked {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+
+        .tax-toggle label {
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            user-select: none;
         }
     </style>
 
-    <div id="filters">
-        <a href="/listings" class="filter <%= !selectedCategory ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-border-all"></i></div>
-            <p>All</p>
-        </a>
-
-        <a href="/listings?category=Trending" class="filter <%= selectedCategory === 'Trending' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-fire"></i></div>
-            <p>Trending</p>
-        </a>
-
-        <a href="/listings?category=Rooms" class="filter <%= selectedCategory === 'Rooms' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-bed"></i></div>
-            <p>Rooms</p>
-        </a>
-
-        <a href="/listings?category=Iconic Cities" class="filter <%= selectedCategory === 'Iconic Cities' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-mountain-city"></i></div>
-            <p>Iconic cities</p>
-        </a>
-
-        <a href="/listings?category=Mountains" class="filter <%= selectedCategory === 'Mountains' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-mountain-sun"></i></div>
-            <p>Mountains</p>
-        </a>
-
-        <a href="/listings?category=Castles" class="filter <%= selectedCategory === 'Castles' ? 'active-filter' : '' %>">
-            <div><i class="fa-brands fa-fort-awesome"></i></div>
-            <p>Castles</p>
-        </a>
-
-        <a href="/listings?category=Amazing Pools" class="filter <%= selectedCategory === 'Amazing Pools' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-person-swimming"></i></div>
-            <p>Amazing pools</p>
-        </a>
-
-        <a href="/listings?category=Camping" class="filter <%= selectedCategory === 'Camping' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-campground"></i></div>
-            <p>Camping</p>
-        </a>
-
-        <a href="/listings?category=Farms" class="filter <%= selectedCategory === 'Farms' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-cow"></i></div>
-            <p>Farms</p>
-        </a>
-
-        <a href="/listings?category=Arctic" class="filter <%= selectedCategory === 'Arctic' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-snowflake"></i></div>
-            <p>Arctic</p>
-        </a>
-
-        <a href="/listings?category=Domes" class="filter <%= selectedCategory === 'Domes' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-igloo"></i></div>
-            <p>Domes</p>
-        </a>
-
-        <a href="/listings?category=Boats" class="filter <%= selectedCategory === 'Boats' ? 'active-filter' : '' %>">
-            <div><i class="fa-solid fa-sailboat"></i></div>
-            <p>Boats</p>
-        </a>
+    <div class="filter-section">
+        <div class="filters-container">
+            <a href="/listings" class="filter <%= !selectedCategory ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-border-all"></i>
+                <span>All Stays</span>
+            </a>
+            <a href="/listings?category=Trending" class="filter <%= selectedCategory === 'Trending' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-fire"></i>
+                <span>Trending</span>
+            </a>
+            <a href="/listings?category=Rooms" class="filter <%= selectedCategory === 'Rooms' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-bed"></i>
+                <span>Rooms</span>
+            </a>
+            <a href="/listings?category=Iconic Cities" class="filter <%= selectedCategory === 'Iconic Cities' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-mountain-city"></i>
+                <span>Iconic cities</span>
+            </a>
+            <a href="/listings?category=Mountains" class="filter <%= selectedCategory === 'Mountains' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-mountain-sun"></i>
+                <span>Mountains</span>
+            </a>
+            <a href="/listings?category=Castles" class="filter <%= selectedCategory === 'Castles' ? 'active-filter' : '' %>">
+                <i class="fa-brands fa-fort-awesome"></i>
+                <span>Castles</span>
+            </a>
+            <a href="/listings?category=Amazing Pools" class="filter <%= selectedCategory === 'Amazing Pools' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-person-swimming"></i>
+                <span>Amazing pools</span>
+            </a>
+            <a href="/listings?category=Camping" class="filter <%= selectedCategory === 'Camping' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-campground"></i>
+                <span>Camping</span>
+            </a>
+            <a href="/listings?category=Farms" class="filter <%= selectedCategory === 'Farms' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-cow"></i>
+                <span>Farms</span>
+            </a>
+            <a href="/listings?category=Arctic" class="filter <%= selectedCategory === 'Arctic' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-snowflake"></i>
+                <span>Arctic</span>
+            </a>
+            <a href="/listings?category=Domes" class="filter <%= selectedCategory === 'Domes' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-igloo"></i>
+                <span>Domes</span>
+            </a>
+            <a href="/listings?category=Boats" class="filter <%= selectedCategory === 'Boats' ? 'active-filter' : '' %>">
+                <i class="fa-solid fa-sailboat"></i>
+                <span>Boats</span>
+            </a>
+        </div>
 
         <div class="tax-toggle">
-            <div class="form-check-reverse form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault">
+            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                <input class="form-check-input mt-0" type="checkbox" role="switch" id="switchCheckDefault">
                 <label class="form-check-label" for="switchCheckDefault">Display total after taxes</label>
             </div>
         </div>
@@ -116,44 +159,62 @@
             <i class="fa-solid fa-magnifying-glass fa-3x text-muted mb-3"></i>
             <h4>No listings found</h4>
             <p class="text-muted">Try modifying your search query or selecting a different category filter.</p>
-            <a href="/listings" class="btn btn-outline-danger mt-2">Clear Filters & Search</a>
+            <a href="/listings" class="btn btn-brand mt-2">Clear Filters & Search</a>
         </div>
     <% } else { %>
-        <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
+        <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
             <% for(let listing of allListings){ %>
-                <a href="/listings/<%= listing._id %>" class="listing-link">
-                    <div class="card col listing-card">
-                        <div class="card-img-container">
+                <div class="card col listing-card">
+                    <div class="card-img-container">
+                        <a href="/listings/<%= listing._id %>" class="listing-link">
                             <img src="<%= listing.image.url %>" class="card-img-top" alt="listing_img">
-                            <% if (listing.category) { %>
-                                <span class="category-badge"><%= listing.category %></span>
-                            <% } %>
-                        </div>
+                        </a>
+                        <% if (listing.category) { %>
+                            <span class="category-badge"><%= listing.category %></span>
+                        <% } %>
+                        <form method="POST" action="/listings/<%= listing._id %>/wishlist" class="wishlist-form">
+                            <button type="submit" class="wishlist-btn" title="Save to Wishlist">
+                                <% if(currUserWishlist.includes(listing._id.toString())) { %>
+                                    <i class="fa-solid fa-heart"></i>
+                                <% } else { %>
+                                    <i class="fa-regular fa-heart"></i>
+                                <% } %>
+                            </button>
+                        </form>
+                    </div>
+                    <a href="/listings/<%= listing._id %>" class="listing-link">
                         <div class="card-body">
                             <h5 class="card-title text-truncate"><%= listing.title %></h5>
                             <p class="card-text mb-0">
-                                <span class="card-price">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
+                                <span class="base-price card-price">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
+                                <span class="tax-price card-price d-none">&#8377;<%= listing.price ? Math.round(listing.price * 1.18).toLocaleString("en-IN") : 0 %></span>
                                 <span class="text-muted fw-normal"> / night</span>
-                                <i class="tax-info text-muted ms-2">+18% GST</i>
+                                <i class="tax-info text-muted ms-2 style-gst">+18% GST</i>
                             </p>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
             <% } %>
         </div>
     <% } %>
 
 <script>
-    let taxSwitch=document.getElementById("switchCheckDefault");
-    taxSwitch.addEventListener("click",()=>{
-        let taxInfo=document.getElementsByClassName("tax-info");
-        for(info of taxInfo){
-            if(info.style.display!="inline"){
-                info.style.display="inline";
+    const taxSwitch = document.getElementById("switchCheckDefault");
+    if (taxSwitch) {
+        taxSwitch.addEventListener("change", () => {
+            const basePrices = document.querySelectorAll(".base-price");
+            const taxPrices = document.querySelectorAll(".tax-price");
+            const taxInfos = document.querySelectorAll(".tax-info");
+
+            if (taxSwitch.checked) {
+                basePrices.forEach(el => el.classList.add("d-none"));
+                taxPrices.forEach(el => el.classList.remove("d-none"));
+                taxInfos.forEach(el => el.style.display = "inline");
+            } else {
+                basePrices.forEach(el => el.classList.remove("d-none"));
+                taxPrices.forEach(el => el.classList.add("d-none"));
+                taxInfos.forEach(el => el.style.display = "none");
             }
-            else{
-                info.style.display="none";
-            }
-        }
-    })
-</script>
+        });
+    }
+</script>

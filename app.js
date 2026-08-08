@@ -80,10 +80,17 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 
-app.use((req, res, next)=>{
+app.use(async (req, res, next)=>{
     res.locals.success=req.flash("success");
     res.locals.error=req.flash("error");
     res.locals.currUser=req.user;
+    if(req.user){
+        const User=require("./models/user.js");
+        const user=await User.findById(req.user._id);
+        res.locals.currUserWishlist=user.wishlist.map(id=>id.toString());
+    } else {
+        res.locals.currUserWishlist=[];
+    }
     next();
 });
 
