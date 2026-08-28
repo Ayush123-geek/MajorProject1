@@ -19,11 +19,13 @@ async function geocodeLocation(locationStr, countryStr) {
 }
 
 module.exports.index = async (req, res) => {
-    const { q, category } = req.query;
+    const { q, category, minPrice, maxPrice, amenities } = req.query;
     let filter = {};
+
     if (category) {
         filter.category = category;
     }
+
     if (q && q.trim() !== "") {
         const regex = new RegExp(q.trim(), "i");
         filter.$or = [
@@ -33,11 +35,32 @@ module.exports.index = async (req, res) => {
             { category: regex },
         ];
     }
+
+    // Price Filter ($gte, $lte)
+    if (minPrice || maxPrice) {
+        filter.price = {};
+        if (minPrice && !isNaN(Number(minPrice))) filter.price.$gte = Number(minPrice);
+        if (maxPrice && !isNaN(Number(maxPrice))) filter.price.$lte = Number(maxPrice);
+    }
+
+    // Amenities Filter ($all)
+    if (amenities) {
+        const amenityList = Array.isArray(amenities) ? amenities : [amenities];
+        filter.amenities = { $all: amenityList };
+    }
+
     const allListings = await Listing.find(filter);
+    const selectedAmenities = amenities
+        ? (Array.isArray(amenities) ? amenities : [amenities])
+        : [];
+
     res.render("listings/index.ejs", {
         allListings,
         searchQuery: q || "",
         selectedCategory: category || "",
+        minPrice: minPrice || "",
+        maxPrice: maxPrice || "",
+        selectedAmenities,
     });
 };
 

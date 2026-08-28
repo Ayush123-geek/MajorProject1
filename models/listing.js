@@ -20,6 +20,11 @@ const listingSchema = new Schema({
         enum: ["Trending", "Rooms", "Iconic Cities", "Mountains", "Castles", "Amazing Pools", "Camping", "Farms", "Arctic", "Domes", "Boats"],
         default: "Trending"
     },
+    amenities: [
+        {
+            type: String,
+        }
+    ],
     geometry: {
         type: {
             type: String,

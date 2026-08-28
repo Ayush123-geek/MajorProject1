@@ -66,12 +66,22 @@ const initDB = async () => {
       console.log("Created default host admin user.");
     }
 
+    const allAmenities = ["WiFi", "Pool", "AC", "Free Parking", "Kitchen", "TV", "Pet Friendly"];
     await Listing.deleteMany({});
-    initData.data = initData.data.map((obj) => {
+    initData.data = initData.data.map((obj, idx) => {
       const coords = locationCoords[obj.location] || [-118.2437, 34.0522];
+      // Pick 3-5 deterministic sample amenities based on index
+      const itemAmenities = [
+        "WiFi",
+        "AC",
+        ...(idx % 2 === 0 ? ["Pool"] : []),
+        ...(idx % 3 === 0 ? ["Kitchen", "TV"] : ["Free Parking"]),
+        ...(idx % 5 === 0 ? ["Pet Friendly"] : [])
+      ];
       return {
         ...obj,
         owner: ownerId,
+        amenities: Array.from(new Set(itemAmenities)),
         geometry: {
           type: "Point",
           coordinates: coords,

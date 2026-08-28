@@ -7,7 +7,7 @@
             justify-content: space-between;
             gap: 1.5rem;
             margin-top: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .filters-container {
@@ -15,14 +15,14 @@
             align-items: center;
             gap: 1.5rem;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
             padding-bottom: 0.25rem;
             flex: 1;
         }
 
         .filters-container::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none;
         }
 
         .filter {
@@ -55,6 +55,30 @@
 
         .filter:hover i {
             transform: translateY(-2px);
+        }
+
+        .filter-btn-trigger {
+            border: 1px solid var(--border-light);
+            border-radius: 2rem;
+            padding: 0.5rem 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .filter-btn-trigger:hover {
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-hover);
+            color: var(--brand-primary);
         }
 
         .tax-toggle {
@@ -91,6 +115,43 @@
             font-size: 0.85rem;
             font-weight: 600;
             user-select: none;
+        }
+
+        .amenity-chip {
+            border: 1px solid var(--border-light);
+            border-radius: 2rem;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-check:checked + .amenity-chip {
+            background-color: rgba(254, 66, 77, 0.1);
+            color: var(--brand-primary);
+            border-color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        .mini-amenity-badge {
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            color: var(--text-main);
+            border: 1px solid var(--border-light);
+            padding: 0.15rem 0.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+        }
+
+        [data-bs-theme="dark"] .mini-amenity-badge {
+            background: rgba(30, 41, 59, 0.85);
+            color: var(--text-main);
         }
     </style>
 
@@ -146,6 +207,16 @@
             </a>
         </div>
 
+        <!-- Filter Modal Trigger Button -->
+        <button class="filter-btn-trigger" data-bs-toggle="modal" data-bs-target="#filterModal">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Filters</span>
+            <% const activeCount = (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + selectedAmenities.length; %>
+            <% if (activeCount > 0) { %>
+                <span class="badge bg-danger rounded-circle p-1"><%= activeCount %></span>
+            <% } %>
+        </button>
+
         <div class="tax-toggle">
             <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
                 <input class="form-check-input mt-0" type="checkbox" role="switch" id="switchCheckDefault">
@@ -154,11 +225,30 @@
         </div>
     </div>
 
+    <!-- Active Filter Tags Indicator Bar -->
+    <% if (minPrice || maxPrice || selectedAmenities.length > 0 || searchQuery || selectedCategory) { %>
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+            <small class="text-muted fw-semibold me-1">Active Filters:</small>
+            <% if (selectedCategory) { %>
+                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">Category: <%= selectedCategory %></span>
+            <% } %>
+            <% if (minPrice || maxPrice) { %>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                    Price: &#8377;<%= minPrice || 0 %> - &#8377;<%= maxPrice || 'Max' %>
+                </span>
+            <% } %>
+            <% for (let am of selectedAmenities) { %>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1"><%= am %></span>
+            <% } %>
+            <a href="/listings" class="small text-danger fw-semibold ms-2 text-decoration-none"><i class="fa-solid fa-xmark me-1"></i>Reset All</a>
+        </div>
+    <% } %>
+
     <% if (allListings.length === 0) { %>
         <div class="text-center my-5 py-5">
             <i class="fa-solid fa-magnifying-glass fa-3x text-muted mb-3"></i>
-            <h4>No listings found</h4>
-            <p class="text-muted">Try modifying your search query or selecting a different category filter.</p>
+            <h4>No listings match your filter criteria</h4>
+            <p class="text-muted">Try expanding your price range or selecting fewer amenity tags.</p>
             <a href="/listings" class="btn btn-brand mt-2">Clear Filters & Search</a>
         </div>
     <% } else { %>
@@ -185,18 +275,100 @@
                     <a href="/listings/<%= listing._id %>" class="listing-link">
                         <div class="card-body">
                             <h5 class="card-title text-truncate"><%= listing.title %></h5>
-                            <p class="card-text mb-0">
+                            <p class="card-text mb-1">
                                 <span class="base-price card-price">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
                                 <span class="tax-price card-price d-none">&#8377;<%= listing.price ? Math.round(listing.price * 1.18).toLocaleString("en-IN") : 0 %></span>
                                 <span class="text-muted fw-normal"> / night</span>
                                 <i class="tax-info text-muted ms-2 style-gst">+18% GST</i>
                             </p>
+                            <% if (listing.amenities && listing.amenities.length > 0) { %>
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    <% for (let am of listing.amenities.slice(0, 3)) { %>
+                                        <span class="mini-amenity-badge"><%= am %></span>
+                                    <% } %>
+                                    <% if (listing.amenities.length > 3) { %>
+                                        <span class="mini-amenity-badge">+<%= listing.amenities.length - 3 %></span>
+                                    <% } %>
+                                </div>
+                            <% } %>
                         </div>
                     </a>
                 </div>
             <% } %>
         </div>
     <% } %>
+
+    <!-- Multi-Criteria Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <form action="/listings" method="GET">
+                    <!-- Preserve existing search/category params -->
+                    <% if (searchQuery) { %><input type="hidden" name="q" value="<%= searchQuery %>"><% } %>
+                    <% if (selectedCategory) { %><input type="hidden" name="category" value="<%= selectedCategory %>"><% } %>
+
+                    <div class="modal-header bg-body-tertiary border-bottom px-4 py-3">
+                        <h5 class="modal-title fw-bold" id="filterModalLabel"><i class="fa-solid fa-sliders text-danger me-2"></i>Filter Stays</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <!-- Price Range Filter -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Nightly Price Range (&#8377;)</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Min Price</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">&#8377;</span>
+                                        <input type="number" name="minPrice" class="form-control" placeholder="0" value="<%= minPrice %>" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Max Price</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">&#8377;</span>
+                                        <input type="number" name="maxPrice" class="form-control" placeholder="20000" value="<%= maxPrice %>" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Amenities Filter -->
+                        <div>
+                            <h6 class="fw-bold mb-3">Amenities & Features</h6>
+                            <% const availableAmenities = [
+                                { name: "WiFi", icon: "fa-wifi" },
+                                { name: "Pool", icon: "fa-person-swimming" },
+                                { name: "AC", icon: "fa-snowflake" },
+                                { name: "Free Parking", icon: "fa-square-parking" },
+                                { name: "Kitchen", icon: "fa-kitchen-set" },
+                                { name: "TV", icon: "fa-tv" },
+                                { name: "Pet Friendly", icon: "fa-dog" }
+                            ]; %>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <% for (let item of availableAmenities) { %>
+                                    <% const isChecked = selectedAmenities.includes(item.name); %>
+                                    <input type="checkbox" class="btn-check" id="am-<%= item.name %>" name="amenities" value="<%= item.name %>" <%= isChecked ? 'checked' : '' %>>
+                                    <label class="amenity-chip" for="am-<%= item.name %>">
+                                        <i class="fa-solid <%= item.icon %>"></i> <%= item.name %>
+                                    </label>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-body-tertiary border-top px-4 py-3 d-flex justify-content-between">
+                        <a href="/listings" class="btn btn-outline-secondary btn-sm">Clear All</a>
+                        <button type="submit" class="btn btn-brand px-4">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 <script>
     const taxSwitch = document.getElementById("switchCheckDefault");
@@ -217,4 +389,4 @@
             }
         });
     }
-</script>
+</script>
