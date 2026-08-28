@@ -1,0 +1,244 @@
+<% layout("/layouts/boilerplate") %>
+
+<style>
+    .ai-hero {
+        background: linear-gradient(135deg, #667eea 0%, #fe424d 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .ai-hero h1 {
+        font-weight: 800;
+    }
+
+    .ai-form-card {
+        border-radius: 1.25rem;
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .itinerary-output {
+        border-radius: 1.25rem;
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+        min-height: 200px;
+    }
+
+    .itinerary-output h1,
+    .itinerary-output h2,
+    .itinerary-output h3 {
+        color: var(--brand-primary);
+    }
+
+    .itinerary-output table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+
+    .itinerary-output table th,
+    .itinerary-output table td {
+        border: 1px solid var(--border-light);
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }
+
+    .itinerary-output table th {
+        background: var(--bg-card);
+        font-weight: 600;
+    }
+
+    .itinerary-output blockquote {
+        border-left: 4px solid var(--brand-primary);
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .itinerary-output hr {
+        border: none;
+        border-top: 2px solid var(--border-light);
+        margin: 1.5rem 0;
+    }
+
+    .pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #fe424d;
+        animation: pulse 1.2s ease-in-out infinite;
+        margin-right: 4px;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .category-select-chip {
+        border: 1px solid var(--border-light);
+        border-radius: 2rem;
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .btn-check:checked + .category-select-chip {
+        background-color: rgba(254, 66, 77, 0.1);
+        color: var(--brand-primary);
+        border-color: var(--brand-primary);
+        font-weight: 600;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- Hero Banner -->
+            <div class="ai-hero text-center">
+                <h1><i class="fa-solid fa-wand-magic-sparkles me-2"></i>AI Travel Concierge</h1>
+                <p class="lead mb-0 mt-2 opacity-75">Tell us your dream trip — our AI will craft a personalized day-by-day itinerary with stay recommendations from Wanderlust.</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Left: Input Form -->
+                <div class="col-lg-5">
+                    <div class="ai-form-card p-4">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-paper-plane text-danger me-2"></i>Plan Your Trip</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">DESTINATION / VIBE</label>
+                            <input type="text" id="aiDestination" class="form-control rounded-3" placeholder="e.g. Goa, Mountains, Bali, Beach Vibes...">
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted">BUDGET (₹)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">&#8377;</span>
+                                    <input type="number" id="aiBudget" class="form-control" placeholder="15000" min="500">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted">DURATION (DAYS)</label>
+                                <input type="number" id="aiDays" class="form-control" placeholder="3" min="1" max="14" value="3">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold text-muted">PREFERRED STAY TYPE</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <% const categories = ["Any", "Trending", "Rooms", "Mountains", "Castles", "Amazing Pools", "Camping", "Farms", "Arctic", "Boats"]; %>
+                                <% for (let cat of categories) { %>
+                                    <input type="radio" class="btn-check" name="aiCategory" id="cat-<%= cat %>" value="<%= cat %>" <%= cat === "Any" ? "checked" : "" %>>
+                                    <label class="category-select-chip" for="cat-<%= cat %>"><%= cat %></label>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <button type="button" id="generateBtn" class="btn btn-brand w-100 py-2.5 fw-bold shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate AI Itinerary
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Output -->
+                <div class="col-lg-7">
+                    <div class="itinerary-output p-4" id="itineraryOutput">
+                        <div class="text-center py-5 text-muted" id="emptyState">
+                            <i class="fa-solid fa-map-location-dot fa-3x mb-3 opacity-50"></i>
+                            <h5 class="fw-bold">Your AI Itinerary Will Appear Here</h5>
+                            <p class="small">Fill in your trip details and click "Generate AI Itinerary" to get started!</p>
+                        </div>
+                        <div class="d-none" id="loadingState">
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <span class="pulse-dot"></span>
+                                    <span class="pulse-dot" style="animation-delay: 0.2s;"></span>
+                                    <span class="pulse-dot" style="animation-delay: 0.4s;"></span>
+                                </div>
+                                <h5 class="fw-bold">Crafting Your Perfect Trip...</h5>
+                                <p class="small text-muted">Our AI is analyzing destinations, stays, and building your personalized itinerary.</p>
+                            </div>
+                        </div>
+                        <div class="d-none" id="resultState"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Markdown rendering library -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+    const generateBtn = document.getElementById("generateBtn");
+    const emptyState = document.getElementById("emptyState");
+    const loadingState = document.getElementById("loadingState");
+    const resultState = document.getElementById("resultState");
+
+    generateBtn.addEventListener("click", async () => {
+        const destination = document.getElementById("aiDestination").value.trim();
+        const budget = document.getElementById("aiBudget").value.trim();
+        const days = document.getElementById("aiDays").value.trim();
+        const category = document.querySelector('input[name="aiCategory"]:checked')?.value || "Any";
+
+        if (!destination) {
+            alert("Please enter a destination or travel vibe.");
+            return;
+        }
+        if (!budget || Number(budget) < 500) {
+            alert("Please enter a valid budget (minimum ₹500).");
+            return;
+        }
+        if (!days || Number(days) < 1) {
+            alert("Please enter trip duration (minimum 1 day).");
+            return;
+        }
+
+        // Show loading
+        emptyState.classList.add("d-none");
+        resultState.classList.add("d-none");
+        loadingState.classList.remove("d-none");
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Generating...`;
+
+        try {
+            const res = await fetch("/ai/generate-itinerary", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ destination, budget, days, category }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // Render markdown to HTML
+                resultState.innerHTML = marked.parse(data.itinerary);
+                loadingState.classList.add("d-none");
+                resultState.classList.remove("d-none");
+            } else {
+                alert(data.message || "Failed to generate itinerary.");
+                loadingState.classList.add("d-none");
+                emptyState.classList.remove("d-none");
+            }
+        } catch (err) {
+            console.error("AI generation error:", err);
+            alert("An error occurred. Please try again.");
+            loadingState.classList.add("d-none");
+            emptyState.classList.remove("d-none");
+        }
+
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate AI Itinerary`;
+    });
+</script>
