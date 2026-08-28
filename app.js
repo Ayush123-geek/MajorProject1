@@ -135,9 +135,12 @@ app.use(async (req, res, next)=>{
     next();
 });
 
+const bookingRouter=require("./routes/booking.js");
+
 app.use("/listings",listingRouter);
 app.use("/listings/:id/reviews",reviewRouter);
 app.use("/",userRouter);
+app.use("/",bookingRouter);
 
 
 //new method of writing all path...

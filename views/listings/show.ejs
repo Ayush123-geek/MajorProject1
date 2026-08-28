@@ -1,4 +1,9 @@
 <% layout("/layouts/boilerplate") %>
+
+<!-- Flatpickr Datepicker CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <div class="row mt-3">
     <div class="col-lg-8 offset-lg-2">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
@@ -19,59 +24,101 @@
     </div>
 
     <div class="col-lg-8 offset-lg-2">
-        <div class="card show-card listing-card">
-            <div class="card-img-container" style="height: 26rem;">
-                <img src="<%= listing.image.url%>" class="card-img-top show-img" alt="listing_img">
-                <% if (listing.category) { %>
-                    <span class="category-badge fs-6 px-3 py-1"><%= listing.category %></span>
-                <% } %>
-            </div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="bg-secondary bg-opacity-10 text-brand rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.25rem; background-color: rgba(254, 66, 77, 0.1); color: #fe424d;">
-                        <i class="fa-solid fa-user-shield"></i>
+        <div class="row g-4">
+            <!-- Left Main Column: Stay info & Map -->
+            <div class="col-lg-7">
+                <div class="card show-card listing-card">
+                    <div class="card-img-container" style="height: 22rem;">
+                        <img src="<%= listing.image.url%>" class="card-img-top show-img" alt="listing_img">
+                        <% if (listing.category) { %>
+                            <span class="category-badge fs-6 px-3 py-1"><%= listing.category %></span>
+                        <% } %>
                     </div>
-                    <div>
-                        <h6 class="mb-0 fw-bold">Hosted by <%= listing.owner ? listing.owner.username : 'Wanderlust Host' %></h6>
-                        <small class="text-muted">Verified Host &bull; Superhost Status</small>
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-secondary bg-opacity-10 text-brand rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.25rem; background-color: rgba(254, 66, 77, 0.1); color: #fe424d;">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Hosted by <%= listing.owner ? listing.owner.username : 'Wanderlust Host' %></h6>
+                                <small class="text-muted">Verified Host &bull; Superhost Status</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <h5 class="fw-bold">About this stay</h5>
+                        <p class="card-text text-secondary lh-lg"><%= listing.description %></p>
                     </div>
                 </div>
-                <hr>
-                <h5 class="fw-bold">About this stay</h5>
-                <p class="card-text text-secondary lh-lg"><%= listing.description %></p>
 
-                <!-- Pricing & GST Breakdown Box -->
-                <div class="p-3 my-4 rounded-3 border bg-body-tertiary">
-                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-receipt me-2 text-danger"></i>Price Breakdown</h6>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Base Price (1 night)</span>
-                        <span class="fw-semibold">&#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
+                <% if(currUser && listing.owner && currUser._id.equals(listing.owner._id)) { %>
+                    <div class="d-flex gap-2 mb-4">
+                        <a href="/listings/<%= listing._id %>/edit" class="btn edit-btn px-4">Edit Listing</a>
+                        <form method="post" action="/listings/<%= listing._id %>?_method=Delete">
+                            <button class="btn btn-dark px-4">Delete Listing</button>
+                        </form>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">GST Tax (18%)</span>
-                        <span class="fw-semibold">&#8377; <%= listing.price ? Math.round(listing.price * 0.18).toLocaleString("en-IN") : 0 %></span>
-                    </div>
-                    <hr class="my-2">
-                    <div class="d-flex justify-content-between fs-5 fw-bold">
-                        <span>Total Price (incl. taxes)</span>
-                        <span class="text-danger">&#8377; <%= listing.price ? Math.round(listing.price * 1.18).toLocaleString("en-IN") : 0 %></span>
+                <% } %>
+            </div>
+
+            <!-- Right Column: Interactive Booking Widget -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border rounded-4 sticky-top" style="top: 6rem; z-index: 10;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-baseline justify-content-between mb-3">
+                            <div>
+                                <span class="fs-3 fw-bold text-danger">&#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
+                                <span class="text-muted fs-6">/ night</span>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-bolt me-1"></i>Instant Book</span>
+                        </div>
+                        <hr class="mb-4">
+
+                        <% if (currUser) { %>
+                            <form action="/listings/<%= listing._id %>/bookings" method="POST" id="bookingForm">
+                                <div class="mb-3">
+                                    <label for="checkIn" class="form-label fw-semibold small text-muted">CHECK-IN</label>
+                                    <input type="text" name="checkIn" id="checkIn" class="form-control rounded-3" placeholder="Select check-in date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="checkOut" class="form-label fw-semibold small text-muted">CHECK-OUT</label>
+                                    <input type="text" name="checkOut" id="checkOut" class="form-control rounded-3" placeholder="Select check-out date" required>
+                                </div>
+
+                                <!-- Dynamic Night & Cost Calculation Box -->
+                                <div id="costSummary" class="p-3 my-3 bg-body-tertiary rounded-3 border d-none">
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>&#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %> &times; <span id="numNights">1</span> night(s)</span>
+                                        <span class="fw-semibold text-body">&#8377; <span id="baseTotal">0</span></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted mb-2">
+                                        <span>GST (18%)</span>
+                                        <span class="fw-semibold text-body">&#8377; <span id="gstTotal">0</span></span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total Amount:</span>
+                                        <span class="text-danger">&#8377; <span id="grandTotal">0</span></span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-brand w-100 py-2 fs-6 fw-bold shadow-sm">
+                                    <i class="fa-solid fa-calendar-check me-2"></i>Reserve Stay
+                                </button>
+                            </form>
+                        <% } else { %>
+                            <div class="text-center py-3">
+                                <p class="text-muted small mb-3">Please log in to check availability and reserve this stay.</p>
+                                <a href="/login" class="btn btn-brand w-100 py-2 fw-bold">Log in to Book</a>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
             </div>
         </div>
-
-        <% if(currUser && listing.owner && currUser._id.equals(listing.owner._id)) { %>
-            <div class="d-flex gap-2 mb-4">
-                <a href="/listings/<%= listing._id %>/edit" class="btn edit-btn px-4">Edit Listing</a>
-                <form method="post" action="/listings/<%= listing._id %>?_method=Delete">
-                    <button class="btn btn-dark px-4">Delete Listing</button>
-                </form>
-            </div>
-        <% } %>
     </div>
 
     <!-- Map Section -->
-    <div class="col-lg-8 offset-lg-2 mb-4">
+    <div class="col-lg-8 offset-lg-2 mb-4 mt-4">
         <hr>
         <h4 class="fw-bold mb-3"><i class="fa-solid fa-map-location-dot me-2 text-danger"></i>Where you'll be</h4>
         <div id="map"></div>
@@ -141,12 +188,56 @@
 </div>
 
 <script>
-    // Pass listing geometry and details to client script
+    // Pass listing details to JS
+    const nightPrice = <%= listing.price || 0 %>;
+
+    // Initialize Flatpickr Datepickers
+    const today = new Date().toISOString().split('T')[0];
+    
+    const checkInPicker = flatpickr("#checkIn", {
+        minDate: today,
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr) {
+            checkOutPicker.set('minDate', dateStr);
+            calculateCost();
+        }
+    });
+
+    const checkOutPicker = flatpickr("#checkOut", {
+        minDate: today,
+        dateFormat: "Y-m-d",
+        onChange: function() {
+            calculateCost();
+        }
+    });
+
+    function calculateCost() {
+        const inDate = checkInPicker.selectedDates[0];
+        const outDate = checkOutPicker.selectedDates[0];
+
+        if (inDate && outDate && outDate > inDate) {
+            const diffTime = Math.abs(outDate - inDate);
+            const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const base = nightPrice * nights;
+            const gst = Math.round(base * 0.18);
+            const total = base + gst;
+
+            document.getElementById("numNights").innerText = nights;
+            document.getElementById("baseTotal").innerText = base.toLocaleString("en-IN");
+            document.getElementById("gstTotal").innerText = gst.toLocaleString("en-IN");
+            document.getElementById("grandTotal").innerText = total.toLocaleString("en-IN");
+
+            document.getElementById("costSummary").classList.remove("d-none");
+        } else {
+            document.getElementById("costSummary").classList.add("d-none");
+        }
+    }
+
+    // Leaflet Map Initialization
     const coordinates = <%- JSON.stringify(listing.geometry && listing.geometry.coordinates && (listing.geometry.coordinates[0] !== 0 || listing.geometry.coordinates[1] !== 0) ? listing.geometry.coordinates : [77.2090, 28.6139]) %>;
     const listingLocation = <%- JSON.stringify(listing.location + ", " + listing.country) %>;
     const listingTitle = <%- JSON.stringify(listing.title) %>;
 
-    // Initialize Leaflet Map (Note: Leaflet takes [lat, lng])
     const lat = coordinates[1];
     const lng = coordinates[0];
     
@@ -156,7 +247,6 @@
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Custom Red Pin Marker
     const redIcon = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
