@@ -1,8 +1,9 @@
 <% layout("/layouts/boilerplate") %>
 
-<!-- Flatpickr Datepicker CSS -->
+<!-- Flatpickr Datepicker & Razorpay SDK -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <div class="row mt-3">
     <div class="col-lg-8 offset-lg-2">
@@ -69,12 +70,12 @@
                                 <span class="fs-3 fw-bold text-danger">&#8377; <%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
                                 <span class="text-muted fs-6">/ night</span>
                             </div>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-bolt me-1"></i>Instant Book</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa-solid fa-shield-halved me-1"></i>Razorpay Secure</span>
                         </div>
                         <hr class="mb-4">
 
                         <% if (currUser) { %>
-                            <form action="/listings/<%= listing._id %>/bookings" method="POST" id="bookingForm">
+                            <form id="bookingForm">
                                 <div class="mb-3">
                                     <label for="checkIn" class="form-label fw-semibold small text-muted">CHECK-IN</label>
                                     <input type="text" name="checkIn" id="checkIn" class="form-control rounded-3" placeholder="Select check-in date" required>
@@ -101,8 +102,8 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-brand w-100 py-2 fs-6 fw-bold shadow-sm">
-                                    <i class="fa-solid fa-calendar-check me-2"></i>Reserve Stay
+                                <button type="submit" id="payBtn" class="btn btn-brand w-100 py-2.5 fs-6 fw-bold shadow-sm">
+                                    <i class="fa-solid fa-lock me-2"></i>Reserve & Pay with Razorpay
                                 </button>
                             </form>
                         <% } else { %>
@@ -188,10 +189,11 @@
 </div>
 
 <script>
-    // Pass listing details to JS
     const nightPrice = <%= listing.price || 0 %>;
+    const listingId = "<%= listing._id %>";
+    const currUserEmail = "<%= currUser ? currUser.email : '' %>";
+    const currUserName = "<%= currUser ? currUser.username : '' %>";
 
-    // Initialize Flatpickr Datepickers
     const today = new Date().toISOString().split('T')[0];
     
     const checkInPicker = flatpickr("#checkIn", {
@@ -231,6 +233,120 @@
         } else {
             document.getElementById("costSummary").classList.add("d-none");
         }
+    }
+
+    // Razorpay Official Checkout Handler
+    const bookingForm = document.getElementById("bookingForm");
+    if (bookingForm) {
+        bookingForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const checkIn = document.getElementById("checkIn").value;
+            const checkOut = document.getElementById("checkOut").value;
+
+            if (!checkIn || !checkOut) {
+                alert("Please select valid check-in and check-out dates.");
+                return;
+            }
+
+            const payBtn = document.getElementById("payBtn");
+            payBtn.disabled = true;
+            payBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating Razorpay Order...`;
+
+            try {
+                // Step 1: Create Order
+                const res = await fetch(`/listings/${listingId}/create-payment-order`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ checkIn, checkOut }),
+                });
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    alert(data.message || "Failed to create payment order.");
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = `<i class="fa-solid fa-lock me-2"></i>Reserve & Pay with Razorpay`;
+                    return;
+                }
+
+                // If running in test simulation mode (without live API keys in .env)
+                if (data.isTestSimulated) {
+                    const verifyRes = await fetch(`/listings/${listingId}/verify-payment`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            checkIn,
+                            checkOut,
+                            razorpay_order_id: data.orderId,
+                            razorpay_payment_id: `pay_sim_${Date.now()}`,
+                            isTestSimulated: true,
+                        }),
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        window.location.href = verifyData.redirectUrl || "/bookings";
+                    } else {
+                        alert(verifyData.message || "Simulated payment verification failed.");
+                        payBtn.disabled = false;
+                    }
+                    return;
+                }
+
+                // Step 2: Open Official Razorpay Checkout Modal
+                const options = {
+                    key: data.keyId,
+                    amount: data.amount,
+                    currency: data.currency,
+                    name: "Wanderlust Stays",
+                    description: `Booking for ${data.listingTitle} (${data.nights} night/s)`,
+                    order_id: data.orderId,
+                    handler: async function (response) {
+                        payBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verifying Payment...`;
+                        // Step 3: Verify Signature & Complete Booking
+                        const verifyRes = await fetch(`/listings/${listingId}/verify-payment`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                checkIn,
+                                checkOut,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                isTestSimulated: false,
+                            }),
+                        });
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            window.location.href = verifyData.redirectUrl || "/bookings";
+                        } else {
+                            alert(verifyData.message || "Razorpay signature verification failed.");
+                            payBtn.disabled = false;
+                            payBtn.innerHTML = `<i class="fa-solid fa-lock me-2"></i>Reserve & Pay with Razorpay`;
+                        }
+                    },
+                    prefill: {
+                        name: currUserName,
+                        email: currUserEmail,
+                    },
+                    theme: {
+                        color: "#fe424d",
+                    },
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on("payment.failed", function (response) {
+                    alert("Payment failed: " + (response.error ? response.error.description : "Transaction cancelled"));
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = `<i class="fa-solid fa-lock me-2"></i>Reserve & Pay with Razorpay`;
+                });
+                rzp.open();
+            } catch (err) {
+                console.error("Razorpay Payment error:", err);
+                alert("An error occurred during Razorpay checkout. Please try again.");
+                payBtn.disabled = false;
+                payBtn.innerHTML = `<i class="fa-solid fa-lock me-2"></i>Reserve & Pay with Razorpay`;
+            }
+        });
     }
 
     // Leaflet Map Initialization

@@ -1,8 +1,170 @@
 const Booking = require("../models/booking.js");
 const Listing = require("../models/listing.js");
 const PDFDocument = require("pdfkit");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 
-// Create a new reservation
+// Initialize Razorpay instance if keys exist
+const getRazorpayInstance = () => {
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        return new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+    }
+    return null;
+};
+
+// Step 1: Create Payment Order
+module.exports.createPaymentOrder = async (req, res) => {
+    try {
+        let { id } = req.params;
+        let { checkIn, checkOut } = req.body || {};
+
+        const listing = await Listing.findById(id);
+        if (!listing) {
+            return res.status(404).json({ success: false, message: "Listing not found." });
+        }
+
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+            return res.status(400).json({ success: false, message: "Invalid check-in or check-out dates." });
+        }
+
+        // Check for overlapping confirmed bookings
+        const existingConflict = await Booking.findOne({
+            listing: id,
+            status: "Confirmed",
+            $or: [{ checkIn: { $lt: end }, checkOut: { $gt: start } }],
+        });
+
+        if (existingConflict) {
+            return res.status(400).json({
+                success: false,
+                message: "These dates are already reserved by another guest. Please select different dates.",
+            });
+        }
+
+        // Calculate nights & pricing
+        const diffTime = Math.abs(end - start);
+        const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const basePrice = listing.price * nights;
+        const gstAmount = Math.round(basePrice * 0.18);
+        const totalPrice = basePrice + gstAmount;
+
+        const razorpay = getRazorpayInstance();
+
+        if (razorpay) {
+            const options = {
+                amount: totalPrice * 100, // amount in paise
+                currency: "INR",
+                receipt: `receipt_${Date.now()}`,
+            };
+            const order = await razorpay.orders.create(options);
+            return res.json({
+                success: true,
+                isTestSimulated: false,
+                orderId: order.id,
+                amount: order.amount,
+                currency: order.currency,
+                keyId: process.env.RAZORPAY_KEY_ID,
+                nights,
+                basePrice,
+                gstAmount,
+                totalPrice,
+                listingTitle: listing.title,
+            });
+        } else {
+            // Test simulation fallback when Razorpay API keys are not in .env
+            const simulatedOrderId = `order_test_${Date.now()}`;
+            return res.json({
+                success: true,
+                isTestSimulated: true,
+                orderId: simulatedOrderId,
+                amount: totalPrice * 100,
+                currency: "INR",
+                keyId: "rzp_test_demo",
+                nights,
+                basePrice,
+                gstAmount,
+                totalPrice,
+                listingTitle: listing.title,
+            });
+        }
+    } catch (err) {
+        console.error("Error creating payment order:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Step 2: Verify Payment & Confirm Booking
+module.exports.verifyPayment = async (req, res) => {
+    try {
+        let { id } = req.params;
+        let {
+            checkIn,
+            checkOut,
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            isTestSimulated,
+        } = req.body || {};
+
+        const listing = await Listing.findById(id);
+        if (!listing) {
+            return res.status(404).json({ success: false, message: "Listing not found." });
+        }
+
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+
+        // Verify Razorpay HMAC signature if live test keys are configured
+        if (!isTestSimulated && process.env.RAZORPAY_KEY_SECRET) {
+            const body = razorpay_order_id + "|" + razorpay_payment_id;
+            const expectedSignature = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+                .update(body.toString())
+                .digest("hex");
+
+            if (expectedSignature !== razorpay_signature) {
+                return res.status(400).json({ success: false, message: "Payment signature verification failed." });
+            }
+        }
+
+        // Calculate nights & pricing
+        const diffTime = Math.abs(end - start);
+        const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const basePrice = listing.price * nights;
+        const gstAmount = Math.round(basePrice * 0.18);
+        const totalPrice = basePrice + gstAmount;
+
+        const newBooking = new Booking({
+            listing: id,
+            user: req.user._id,
+            checkIn: start,
+            checkOut: end,
+            nights,
+            basePrice,
+            gstAmount,
+            totalPrice,
+            status: "Confirmed",
+            paymentStatus: "Paid",
+            razorpayOrderId: razorpay_order_id || `order_sim_${Date.now()}`,
+            razorpayPaymentId: razorpay_payment_id || `pay_sim_${Date.now()}`,
+        });
+
+        await newBooking.save();
+        req.flash("success", "Payment successful & Reservation confirmed! You can view your invoice in My Bookings.");
+        return res.json({ success: true, redirectUrl: "/bookings" });
+    } catch (err) {
+        console.error("Error verifying payment:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Existing createBooking fallback (Form POST fallback)
 module.exports.createBooking = async (req, res) => {
     let { id } = req.params;
     let { checkIn, checkOut } = req.body;
@@ -21,13 +183,10 @@ module.exports.createBooking = async (req, res) => {
         return res.redirect(`/listings/${id}`);
     }
 
-    // Check for overlapping confirmed bookings
     const existingConflict = await Booking.findOne({
         listing: id,
         status: "Confirmed",
-        $or: [
-            { checkIn: { $lt: end }, checkOut: { $gt: start } },
-        ],
+        $or: [{ checkIn: { $lt: end }, checkOut: { $gt: start } }],
     });
 
     if (existingConflict) {
@@ -35,7 +194,6 @@ module.exports.createBooking = async (req, res) => {
         return res.redirect(`/listings/${id}`);
     }
 
-    // Calculate nights & pricing
     const diffTime = Math.abs(end - start);
     const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const basePrice = listing.price * nights;
@@ -52,6 +210,9 @@ module.exports.createBooking = async (req, res) => {
         gstAmount,
         totalPrice,
         status: "Confirmed",
+        paymentStatus: "Paid",
+        razorpayOrderId: `order_sim_${Date.now()}`,
+        razorpayPaymentId: `pay_sim_${Date.now()}`,
     });
 
     await newBooking.save();
@@ -80,7 +241,6 @@ module.exports.downloadInvoice = async (req, res) => {
 
     const doc = new PDFDocument({ margin: 50 });
 
-    // Stream directly to response
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
         "Content-Disposition",
@@ -109,14 +269,14 @@ module.exports.downloadInvoice = async (req, res) => {
 
     doc.fillColor("#111827").fontSize(12).text("Property Details:", 300, 185, { underline: true });
     doc.fontSize(10).fillColor("#374151")
-        .text(`Stay: ${booking.listing.title}`)
-        .text(`Location: ${booking.listing.location}, ${booking.listing.country}`);
+        .text(`Stay: ${booking.listing ? booking.listing.title : 'Stay'}`)
+        .text(`Location: ${booking.listing ? booking.listing.location : ''}, ${booking.listing ? booking.listing.country : ''}`);
 
     doc.moveDown(2);
     doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(50, 245).lineTo(550, 245).stroke();
 
     // Booking Breakdown Table Header
-    doc.fillColor("#111827").fontSize(12).text("Reservation Summary", 50, 260, { bold: true });
+    doc.fillColor("#111827").fontSize(12).text("Reservation & Payment Summary", 50, 260, { bold: true });
     
     let y = 285;
     doc.fontSize(10).fillColor("#6b7280")
@@ -132,8 +292,12 @@ module.exports.downloadInvoice = async (req, res) => {
         .fillColor("#111827").text(`${booking.nights} Night(s)`, 180, y);
 
     y += 20;
-    doc.fillColor("#6b7280").text("Status:", 50, y)
-        .fillColor(booking.status === "Confirmed" ? "#10b981" : "#ef4444").text(booking.status, 180, y);
+    doc.fillColor("#6b7280").text("Payment Status:", 50, y)
+        .fillColor("#10b981").text(`${booking.paymentStatus || "Paid"} (Razorpay Verified)`, 180, y);
+
+    y += 20;
+    doc.fillColor("#6b7280").text("Payment Ref ID:", 50, y)
+        .fillColor("#111827").text(booking.razorpayPaymentId || "N/A", 180, y);
 
     doc.moveDown(2);
     doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(50, y + 25).lineTo(550, y + 25).stroke();

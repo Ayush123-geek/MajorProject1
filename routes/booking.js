@@ -4,7 +4,11 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const { isLoggedIn } = require("../middleware.js");
 const bookingController = require("../controller/booking.js");
 
-// POST /listings/:id/bookings - Create new reservation
+// Razorpay Payment Endpoints
+router.post("/listings/:id/create-payment-order", isLoggedIn, wrapAsync(bookingController.createPaymentOrder));
+router.post("/listings/:id/verify-payment", isLoggedIn, wrapAsync(bookingController.verifyPayment));
+
+// POST /listings/:id/bookings - Create new reservation (fallback)
 router.post("/listings/:id/bookings", isLoggedIn, wrapAsync(bookingController.createBooking));
 
 // GET /bookings - View current user's reservations
