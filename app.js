@@ -76,6 +76,47 @@ app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(
+        new GoogleStrategy(
+            {
+                clientID: process.env.GOOGLE_CLIENT_ID,
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                callbackURL: "/auth/google/callback",
+            },
+            async (accessToken, refreshToken, profile, done) => {
+                try {
+                    let user = await User.findOne({ googleId: profile.id });
+                    if (user) {
+                        return done(null, user);
+                    }
+                    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : "";
+                    if (email) {
+                        user = await User.findOne({ email });
+                        if (user) {
+                            user.googleId = profile.id;
+                            await user.save();
+                            return done(null, user);
+                        }
+                    }
+                    const username = profile.displayName || (email ? email.split("@")[0] : `user_${profile.id}`);
+                    user = new User({
+                        username,
+                        email,
+                        googleId: profile.id,
+                    });
+                    await user.save();
+                    return done(null, user);
+                } catch (err) {
+                    return done(err, null);
+                }
+            }
+        )
+    );
+}
+
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
