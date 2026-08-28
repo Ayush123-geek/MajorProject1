@@ -5,6 +5,9 @@ const aiController = require("../controller/ai.js");
 // AI Travel Planner Page
 router.get("/ai-planner", aiController.renderAiPlanner);
 
+// Floating AI Chatbot Endpoint
+router.post("/ai/chat-stream", aiController.chatQuery);
+
 // Generate AI Itinerary (API endpoint)
 router.post("/ai/generate-itinerary", aiController.generateItinerary);
 

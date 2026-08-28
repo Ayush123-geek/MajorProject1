@@ -1,71 +1,92 @@
 <% layout("/layouts/boilerplate") %>
-<div class="row mt-3">
-    <div class="col-8 offset-2">
-    <h3>Create New Listing</h3>
-    <form method="post" action="/listings" novalidate class="needs-validation" enctype="multipart/form-data">
-        <div class="mb-3">
-            <label for="title" class="form-label">Title</label>
-            <input type="text" 
-            name="listing[title]" 
-            placeholder="enter title" 
-            class="form-control"
-            required >
-            <div class="valid-feedback">Title looks good!</div>
-        </div>
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea name="listing[description]" 
-            class="form-control"
-            required></textarea>
-            <div class="invalid-feedback">Please enter a short description.</div>
-        </div>
-        <div class="mb-3">
-            <label for="image" class="form-label">Upload Listing Image</label>
-            <input type="file" name="listing[image]" 
-            class="form-control" required>
-        </div>
-        <div class="row">
-            <div class="mb-3 col-md-4">
-            <label for="price" class="form-label">Price</label>
-            <input type="number" name="listing[price]" placeholder="enter price"
-            class="form-control" required>
-            <div class="invalid-feedback">Please enter a valid Price!</div>
+
+<div class="row mt-3 justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card border rounded-4 p-4 p-md-5 shadow-sm bg-body">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa-solid fa-house-chimney fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">Airbnb your home</h3>
+                    <p class="text-muted small mb-0">List your property on Wanderlust and start earning</p>
+                </div>
             </div>
-            <div class="mb-3 col-md-8">
-            <label for="country" class="form-label">Country</label>
-            <input type="text" name="listing[country]" placeholder="enter country"
-            class="form-control" required>
-            <div class="invalid-feedback">Country name should be valid.</div>
-            </div>
+
+            <form method="post" action="/listings" novalidate class="needs-validation" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="title" class="form-label small fw-semibold text-muted">PROPERTY TITLE</label>
+                    <input type="text" 
+                        name="listing[title]" 
+                        id="title"
+                        placeholder="e.g. Luxury Seafront Villa with Infinity Pool" 
+                        class="form-control rounded-3"
+                        required>
+                    <div class="invalid-feedback">Please provide a descriptive property title.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label small fw-semibold text-muted">DESCRIPTION</label>
+                    <textarea name="listing[description]" 
+                        id="description"
+                        rows="4"
+                        placeholder="Describe the atmosphere, bedrooms, scenic views, and local attractions..."
+                        class="form-control rounded-3"
+                        required></textarea>
+                    <div class="invalid-feedback">Please write a short description.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="image" class="form-label small fw-semibold text-muted">UPLOAD COVER IMAGE</label>
+                    <input type="file" name="listing[image]" id="image" class="form-control rounded-3" required>
+                    <div class="invalid-feedback">Please upload a high quality cover photo.</div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="price" class="form-label small fw-semibold text-muted">NIGHTLY PRICE (&#8377;)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">&#8377;</span>
+                            <input type="number" name="listing[price]" id="price" placeholder="e.g. 3500" class="form-control" min="100" required>
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid price per night.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="category" class="form-label small fw-semibold text-muted">CATEGORY</label>
+                        <select name="listing[category]" id="category" class="form-select rounded-3" required>
+                            <option value="Trending" selected>Trending</option>
+                            <option value="Rooms">Rooms</option>
+                            <option value="Iconic Cities">Iconic Cities</option>
+                            <option value="Mountains">Mountains</option>
+                            <option value="Castles">Castles</option>
+                            <option value="Amazing Pools">Amazing Pools</option>
+                            <option value="Camping">Camping</option>
+                            <option value="Farms">Farms</option>
+                            <option value="Arctic">Arctic</option>
+                            <option value="Domes">Domes</option>
+                            <option value="Boats">Boats</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="country" class="form-label small fw-semibold text-muted">COUNTRY</label>
+                        <input type="text" name="listing[country]" id="country" placeholder="e.g. India" class="form-control rounded-3" required>
+                        <div class="invalid-feedback">Country name is required.</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="location" class="form-label small fw-semibold text-muted">LOCATION / CITY</label>
+                    <input type="text" name="listing[location]" id="location" placeholder="e.g. Goa, Manali, Jaipur, Paris" class="form-control rounded-3" required>
+                    <div class="invalid-feedback">Location or city is required.</div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button class="btn btn-brand rounded-pill px-4 py-2 fw-bold flex-grow-1 shadow-sm">
+                        <i class="fa-solid fa-plus me-1"></i>Publish Listing
+                    </button>
+                    <a href="/listings" class="btn btn-outline-secondary rounded-pill px-4 py-2">Cancel</a>
+                </div>
+            </form>
         </div>
-        <div class="row">
-            <div class="mb-3 col-md-6">
-                <label for="location" class="form-label">Location</label>
-                <input type="text" name="listing[location]" placeholder="enter location" class="form-control" required>
-                <div class="invalid-feedback">Location should be valid.</div>
-            </div>
-            <div class="mb-3 col-md-6">
-                <label for="category" class="form-label">Category</label>
-                <select name="listing[category]" class="form-select" required>
-                    <option value="Trending">Trending</option>
-                    <option value="Rooms">Rooms</option>
-                    <option value="Iconic Cities">Iconic Cities</option>
-                    <option value="Mountains">Mountains</option>
-                    <option value="Castles">Castles</option>
-                    <option value="Amazing Pools">Amazing Pools</option>
-                    <option value="Camping">Camping</option>
-                    <option value="Farms">Farms</option>
-                    <option value="Arctic">Arctic</option>
-                    <option value="Domes">Domes</option>
-                    <option value="Boats">Boats</option>
-                </select>
-                <div class="invalid-feedback">Please select a category.</div>
-            </div>
-        </div>
-        
-        <button class="btn btn-dark add-btn mt-3"> add</button>
-    </form>
-    <br><br>
     </div>
 </div>
-

@@ -7,7 +7,7 @@
             justify-content: space-between;
             gap: 1.5rem;
             margin-top: 1rem;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .filters-container {
@@ -137,24 +137,9 @@
             border-color: var(--brand-primary);
             font-weight: 600;
         }
-
-        .mini-amenity-badge {
-            font-size: 0.7rem;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(4px);
-            color: var(--text-main);
-            border: 1px solid var(--border-light);
-            padding: 0.15rem 0.5rem;
-            border-radius: 1rem;
-            font-weight: 600;
-        }
-
-        [data-bs-theme="dark"] .mini-amenity-badge {
-            background: rgba(30, 41, 59, 0.85);
-            color: var(--text-main);
-        }
     </style>
 
+    <!-- Top Category Filter Bar & Actions -->
     <div class="filter-section">
         <div class="filters-container">
             <a href="/listings" class="filter <%= !selectedCategory ? 'active-filter' : '' %>">
@@ -207,7 +192,7 @@
             </a>
         </div>
 
-        <!-- Filter Modal Trigger Button -->
+        <!-- Filter Trigger Button -->
         <button class="filter-btn-trigger" data-bs-toggle="modal" data-bs-target="#filterModal">
             <i class="fa-solid fa-sliders"></i>
             <span>Filters</span>
@@ -217,47 +202,52 @@
             <% } %>
         </button>
 
+        <!-- Display Total After Taxes Switch -->
         <div class="tax-toggle">
             <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
                 <input class="form-check-input mt-0" type="checkbox" role="switch" id="switchCheckDefault">
-                <label class="form-check-label" for="switchCheckDefault">Display total after taxes</label>
+                <label class="form-check-label" for="switchCheckDefault">Display taxes</label>
             </div>
         </div>
     </div>
 
     <!-- Active Filter Tags Indicator Bar -->
     <% if (minPrice || maxPrice || selectedAmenities.length > 0 || searchQuery || selectedCategory) { %>
-        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
-            <small class="text-muted fw-semibold me-1">Active Filters:</small>
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+            <small class="text-muted fw-semibold me-1"><i class="fa-solid fa-filter me-1"></i>Active:</small>
             <% if (selectedCategory) { %>
-                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">Category: <%= selectedCategory %></span>
+                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><%= selectedCategory %></span>
             <% } %>
             <% if (minPrice || maxPrice) { %>
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
-                    Price: &#8377;<%= minPrice || 0 %> - &#8377;<%= maxPrice || 'Max' %>
+                    &#8377;<%= minPrice || 0 %> - &#8377;<%= maxPrice || 'Any' %>
                 </span>
             <% } %>
             <% for (let am of selectedAmenities) { %>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1"><%= am %></span>
             <% } %>
-            <a href="/listings" class="small text-danger fw-semibold ms-2 text-decoration-none"><i class="fa-solid fa-xmark me-1"></i>Reset All</a>
+            <a href="/listings" class="small text-danger fw-semibold ms-2 text-decoration-none"><i class="fa-solid fa-xmark me-1"></i>Clear all</a>
         </div>
     <% } %>
 
+    <!-- Listings Grid (Overlapping Completely Resolved) -->
     <% if (allListings.length === 0) { %>
         <div class="text-center my-5 py-5">
-            <i class="fa-solid fa-magnifying-glass fa-3x text-muted mb-3"></i>
-            <h4>No listings match your filter criteria</h4>
-            <p class="text-muted">Try expanding your price range or selecting fewer amenity tags.</p>
-            <a href="/listings" class="btn btn-brand mt-2">Clear Filters & Search</a>
+            <div class="bg-body-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="fa-solid fa-magnifying-glass fa-2x text-muted"></i>
+            </div>
+            <h4 class="fw-bold">No stays found</h4>
+            <p class="text-muted">Try adjusting your search criteria or resetting filters to see more results.</p>
+            <a href="/listings" class="btn btn-brand mt-2">View All Stays</a>
         </div>
     <% } else { %>
-        <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
+        <div class="listings-grid">
             <% for(let listing of allListings){ %>
-                <div class="card col listing-card">
+                <div class="listing-card">
+                    <!-- Image with Wishlist Button & Category Badge -->
                     <div class="card-img-container">
                         <a href="/listings/<%= listing._id %>" class="listing-link">
-                            <img src="<%= listing.image.url %>" class="card-img-top" alt="listing_img">
+                            <img src="<%= listing.image.url %>" class="card-img-top" alt="<%= listing.title %>" loading="lazy">
                         </a>
                         <% if (listing.category) { %>
                             <span class="category-badge"><%= listing.category %></span>
@@ -272,25 +262,34 @@
                             </button>
                         </form>
                     </div>
+
+                    <!-- Card Body -->
                     <a href="/listings/<%= listing._id %>" class="listing-link">
                         <div class="card-body">
-                            <h5 class="card-title text-truncate"><%= listing.title %></h5>
-                            <p class="card-text mb-1">
-                                <span class="base-price card-price">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
-                                <span class="tax-price card-price d-none">&#8377;<%= listing.price ? Math.round(listing.price * 1.18).toLocaleString("en-IN") : 0 %></span>
-                                <span class="text-muted fw-normal"> / night</span>
-                                <i class="tax-info text-muted ms-2 style-gst">+18% GST</i>
-                            </p>
+                            <div>
+                                <h5 class="card-title text-truncate" title="<%= listing.title %>"><%= listing.title %></h5>
+                                <p class="card-location"><i class="fa-solid fa-location-dot me-1 text-danger"></i><%= listing.location %>, <%= listing.country %></p>
+                            </div>
+
                             <% if (listing.amenities && listing.amenities.length > 0) { %>
-                                <div class="d-flex flex-wrap gap-1 mt-2">
-                                    <% for (let am of listing.amenities.slice(0, 3)) { %>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    <% for (let am of listing.amenities.slice(0, 2)) { %>
                                         <span class="mini-amenity-badge"><%= am %></span>
                                     <% } %>
-                                    <% if (listing.amenities.length > 3) { %>
-                                        <span class="mini-amenity-badge">+<%= listing.amenities.length - 3 %></span>
+                                    <% if (listing.amenities.length > 2) { %>
+                                        <span class="mini-amenity-badge">+<%= listing.amenities.length - 2 %></span>
                                     <% } %>
                                 </div>
                             <% } %>
+
+                            <div class="card-price-row">
+                                <div>
+                                    <span class="base-price card-price">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : 0 %></span>
+                                    <span class="tax-price card-price d-none">&#8377;<%= listing.price ? Math.round(listing.price * 1.18).toLocaleString("en-IN") : 0 %></span>
+                                    <span class="text-muted small"> / night</span>
+                                </div>
+                                <span class="tax-info d-none style-gst">+18% GST</span>
+                            </div>
                         </div>
                     </a>
                 </div>
@@ -313,22 +312,22 @@
                     </div>
 
                     <div class="modal-body p-4">
-                        <!-- Price Range Filter -->
+                        <!-- Price Range Filter (Clear Placeholders, No Confusing Defaults) -->
                         <div class="mb-4">
-                            <h6 class="fw-bold mb-3">Nightly Price Range (&#8377;)</h6>
+                            <h6 class="fw-bold mb-3">Nightly Rate Range</h6>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label small text-muted">Min Price</label>
+                                    <label class="form-label small text-muted">Minimum (&#8377;)</label>
                                     <div class="input-group">
                                         <span class="input-group-text">&#8377;</span>
-                                        <input type="number" name="minPrice" class="form-control" placeholder="0" value="<%= minPrice %>" min="0">
+                                        <input type="number" name="minPrice" class="form-control" placeholder="e.g. 1000" value="<%= minPrice %>" min="0">
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label small text-muted">Max Price</label>
+                                    <label class="form-label small text-muted">Maximum (&#8377;)</label>
                                     <div class="input-group">
                                         <span class="input-group-text">&#8377;</span>
-                                        <input type="number" name="maxPrice" class="form-control" placeholder="20000" value="<%= maxPrice %>" min="0">
+                                        <input type="number" name="maxPrice" class="form-control" placeholder="e.g. 10000" value="<%= maxPrice %>" min="0">
                                     </div>
                                 </div>
                             </div>
@@ -362,8 +361,8 @@
                     </div>
 
                     <div class="modal-footer bg-body-tertiary border-top px-4 py-3 d-flex justify-content-between">
-                        <a href="/listings" class="btn btn-outline-secondary btn-sm">Clear All</a>
-                        <button type="submit" class="btn btn-brand px-4">Apply Filters</button>
+                        <a href="/listings" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Clear All</a>
+                        <button type="submit" class="btn btn-brand rounded-pill px-4">Apply Filters</button>
                     </div>
                 </form>
             </div>
@@ -381,11 +380,11 @@
             if (taxSwitch.checked) {
                 basePrices.forEach(el => el.classList.add("d-none"));
                 taxPrices.forEach(el => el.classList.remove("d-none"));
-                taxInfos.forEach(el => el.style.display = "inline");
+                taxInfos.forEach(el => el.classList.remove("d-none"));
             } else {
                 basePrices.forEach(el => el.classList.remove("d-none"));
                 taxPrices.forEach(el => el.classList.add("d-none"));
-                taxInfos.forEach(el => el.style.display = "none");
+                taxInfos.forEach(el => el.classList.add("d-none"));
             }
         });
     }

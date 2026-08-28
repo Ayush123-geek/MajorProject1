@@ -1,60 +1,193 @@
 <style>
-  .search-btn{
-    background-color: #fe424d;
-    color: #fff;
-    border-radius: 25px;
-    padding: 0 1rem 0 1rem;
-  }
-  .search-btn:hover{
-    background-color: #fe424d;
-    color: #fff;
+  /* Airbnb-style User Menu Dropdown Pill */
+  .user-menu-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 2rem;
+    padding: 0.4rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-main);
   }
 
-  .search-btn i{
-    display: inline;
-    margin-right: 0.5rem;
+  .user-menu-pill:hover, .user-menu-pill:focus {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-main);
   }
 
-  .search-inp{
-    border-radius: 25px;
-    padding: 0.5rem 3rem 0.5rem 3rem;
-    font-size: 1rem;
+  .user-menu-dropdown {
+    border-radius: 1.25rem !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: var(--shadow-hover) !important;
+    background: var(--bg-card) !important;
+    padding: 0.5rem 0 !important;
+    min-width: 230px !important;
+    margin-top: 0.5rem !important;
+  }
+
+  .user-menu-dropdown .dropdown-item {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .user-menu-dropdown .dropdown-item:hover {
+    background-color: rgba(254, 66, 77, 0.08);
+    color: var(--brand-primary);
+  }
+
+  .user-menu-dropdown .dropdown-divider {
+    border-color: var(--border-light);
+    margin: 0.4rem 0;
+  }
+
+  .nav-host-link {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    text-decoration: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 2rem;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .nav-host-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--brand-primary);
+  }
+
+  [data-bs-theme="dark"] .nav-host-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 </style>
 
-<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/listings"><i class="fa-regular fa-compass"></i></a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <div class="navbar-nav">
-          <a class="nav-link" href="/listings">Explore</a>
-          <a class="nav-link" href="/ai-planner"><i class="fa-solid fa-wand-magic-sparkles" style="color:#fe424d"></i>&nbsp;AI Planner</a>
-      </div>
-      <div class="navbar-nav ms-auto">
-        <form class="d-flex" role="search" action="/listings" method="GET">
-          <input class="form-control me-2 search-inp" type="search" name="q" placeholder="Search destinations, title..." value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" />
-          <button class="btn search-btn" type="submit">
-            <i class="fa-solid fa-magnifying-glass"></i>Search</button>
-        </form>
-      </div>
-      <div class="navbar-nav ms-auto align-items-center gap-2">
-        <button id="themeToggleBtn" class="theme-toggle-btn me-2" title="Toggle Light/Dark mode">
-          <i class="fa-solid fa-moon" id="themeIcon"></i>
+<nav class="navbar navbar-expand sticky-top">
+  <div class="container-fluid px-lg-4 d-flex align-items-center justify-content-between">
+    
+    <!-- Zone 1 (Left): Brand Logo -->
+    <a class="navbar-brand me-2" href="/listings" title="Wanderlust Home">
+      <i class="fa-regular fa-compass"></i>
+      <span>Wanderlust</span>
+    </a>
+
+    <!-- Zone 2 (Center): Elegant Search Pill -->
+    <div class="d-none d-md-flex justify-content-center flex-grow-1 px-3" style="max-width: 460px;">
+      <form class="search-wrapper w-100 m-0" role="search" action="/listings" method="GET">
+        <input 
+          class="form-control search-inp" 
+          type="search" 
+          name="q" 
+          placeholder="Search destinations, stays, cities..." 
+          value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" 
+          autocomplete="off"
+        />
+        <button class="search-btn-icon" type="submit" title="Search">
+          <i class="fa-solid fa-magnifying-glass"></i>
         </button>
-        <a class="nav-link" href="/listings/new">Airbnb your home</a>
-        <% if(!currUser) {%>
-          <a class="nav-link" href="/signup"><b>Sign up</b></a>
-          <a class="nav-link" href="/login"><b>Login</b></a>
-        <% } %>
-        <% if(currUser) {%>
-          <a class="nav-link" href="/bookings"><i class="fa-solid fa-calendar-check" style="color:#fe424d"></i>&nbsp;My Bookings</a>
-          <a class="nav-link" href="/wishlist"><i class="fa-solid fa-heart" style="color:#fe424d"></i>&nbsp;Wishlist</a>
-          <a class="nav-link" href="/logout"><b>Log out</b></a>
-        <% } %>
+      </form>
+    </div>
+
+    <!-- Zone 3 (Right): Host Link + Theme Switch + Airbnb-Style Dropdown Menu -->
+    <div class="d-flex align-items-center gap-2">
+      <!-- Airbnb your home subtle link -->
+      <a class="nav-host-link d-none d-sm-inline-block" href="/listings/new">Airbnb your home</a>
+
+      <!-- Dark / Light Mode Toggle Button -->
+      <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Light/Dark mode">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </button>
+
+      <!-- Unified User Menu Dropdown Pill -->
+      <div class="dropdown">
+        <button class="user-menu-pill dropdown-toggle border-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa-solid fa-bars fs-6 text-muted"></i>
+          <% if (currUser) { %>
+            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.8rem;">
+              <%= currUser.username[0].toUpperCase() %>
+            </div>
+          <% } else { %>
+            <i class="fa-solid fa-circle-user fs-4 text-secondary"></i>
+          <% } %>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown shadow-lg" aria-labelledby="userMenuDropdown">
+          <% if (currUser) { %>
+            <li class="px-3 py-2">
+              <div class="fw-bold text-truncate" style="max-width: 180px;"><%= currUser.username %></div>
+              <small class="text-muted"><%= currUser.email || 'Logged In' %></small>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="/bookings">
+                <i class="fa-solid fa-calendar-check text-danger"></i>My Bookings
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/wishlist">
+                <i class="fa-solid fa-heart text-danger"></i>Wishlist
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/listings/new">
+                <i class="fa-solid fa-house-medical text-primary"></i>Airbnb your home
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" href="/logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>Log out
+              </a>
+            </li>
+          <% } else { %>
+            <li>
+              <a class="dropdown-item fw-bold" href="/signup">
+                <i class="fa-solid fa-user-plus text-danger"></i>Sign up
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/login">
+                <i class="fa-solid fa-arrow-right-to-bracket text-secondary"></i>Log in
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="/listings/new">
+                <i class="fa-solid fa-house-chimney text-muted"></i>Airbnb your home
+              </a>
+            </li>
+          <% } %>
+        </ul>
       </div>
     </div>
+
+  </div>
+
+  <!-- Mobile Search Bar Row (Visible on small screens only) -->
+  <div class="d-flex d-md-none w-100 px-3 pb-2 pt-1 border-top">
+    <form class="search-wrapper w-100" role="search" action="/listings" method="GET">
+      <input 
+        class="form-control search-inp" 
+        type="search" 
+        name="q" 
+        placeholder="Search destinations, stays..." 
+        value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" 
+        autocomplete="off"
+      />
+      <button class="search-btn-icon" type="submit" title="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
   </div>
 </nav>
